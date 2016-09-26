@@ -96,3 +96,6 @@ URLChecker.removeCDN(url)  will do this.
 
 baidu.com is in, but pan.baidu.com perhaps is used to properate malware, we should take care of this.
 
+## Reference
+
+https://github.com/golismero/golismero/tree/master/thirdparty_libs/tldextract
