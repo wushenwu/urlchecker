@@ -34,6 +34,7 @@ def dumpInfoCnt(filename, d_key_value):
 def loadDomainKeyWords():
     '''
     this is usually the all_host_ip data,  the newly domain
+    mkiller_2016-12-29%26domain.txt 
     
     date	host_ip
     2016-12-29	titan-rich.com
@@ -49,6 +50,9 @@ def loadDomainKeyWords():
         for line in fr:
             s_domain.add(line.strip().split("\t")[1])
     return s_domain
+            
+def loadHostKeywords():
+    return set(["mail.easternmills.com","xy.jx.dynamic.163data.com.cn.jxzhjy.com",])
     
 def finditem(anchor_begin, anchor_end, line):
     index = line.find(anchor_begin)
@@ -78,6 +82,7 @@ class URLChecker_Stat:
         self.d_sus_domain_keyword = {}  # to know domain suspicious by which keyword
         
         self.s_DomainKeywords = loadDomainKeyWords()
+        #self.s_HostKeywords = loadHostKeywords()
         
         self.d_urlkeywords_cnt = defaultdict(int)
         self.d_urlkeywords_domain = defaultdict(set)
@@ -195,8 +200,7 @@ class URLChecker_Stat:
         suspicious_type = "urlkeywords"
         
         #关键词的获取应该自动化产生
-        s_suspicious_urlkeywords = set(["/pody.php", "/gl_my/", "/ldy/",
-        "/zuoai",])
+        s_suspicious_urlkeywords = set()
         for domain, hostInfo in self.d_domain_hosts.iteritems():
             if hostInfo['isInAlexaTop'] or hostInfo['isip'] or not hostInfo['isvaliddomain']:
                 continue
@@ -207,7 +211,8 @@ class URLChecker_Stat:
                     if keyword.replace('.apk', '').isdigit():
                         continue
                     if url.find(keyword) != -1:
-                        if self.checkHasCNAME(domain):
+                        #if self.checkHasCNAME(domain):
+                        if True:
                             self.s_suspiciousDomain[domain].add(SUSPICIOUS_TYPE_URL_KEYWORDS)
                             #需要对keyword进行记录、验证
                             self.d_sus_domain_keyword[domain] = keyword
@@ -519,11 +524,16 @@ class URLChecker_Stat:
                 line = urllib.unquote(line.strip())
                 
                 host, port, subhost, domain, tld, isip, isvalidDomain = self.urlchecker.getHostInfo(line, True)
-                                                
-                d_domain_hosts.setdefault(domain, set()).add(host)
-                d_domain_urls.setdefault(domain, set()).add(line)
+                
+                isInAlexaTop = ''
+                if self.url_util.isDirectInAlexTop(domain, domain):
+                    isInAlexaTop = '_alexa_'
+                
+                d_domain_hosts.setdefault(domain + '\t' + isInAlexaTop, set()).add(host)
+                d_domain_urls.setdefault(domain + '\t' + str(isip), set()).add(line)
                 d_host_urls.setdefault(host, set()).add(line)
-                d_port_urls.setdefault(port, set()).add(line)
+                if port != '80':
+                    d_port_urls.setdefault(port, set()).add(line)
 
                 info = line.strip() + '\t' + domain + '\t' + host + '\tisip\n'
                 if not isip:
@@ -590,13 +600,18 @@ class URLChecker_Stat:
 
 def main():
     obj = URLChecker_Stat()
+    #obj.loadNewHostIP()
+    #obj.loadDomainLevel()
+    
     
     obj.doSimpleStat(sys.argv[1])
-    
     obj.dumpSuspicious_Domain_Hosts(sys.argv[1])
     obj.dumpStat_Domain_Hosts(sys.argv[1])
     
+    #obj.doStat_Domain_Hosts(sys.argv[1])
     obj.dumpUrlKeywords()
+
+    
     obj.doStatPathBest(sys.argv[1])
     
 if __name__ == "__main__":
